@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pie chart for distribution of death in world</title>
+    <link rel="icon" type="image/png" sizes="64x64" href="../images/favicon3.ico">
+
+    <!-- Font Awesome icons (free version)-->
+    <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
+    <!-- Google fonts-->
+    <link href="https://fonts.googleapis.com/css?family=Catamaran:100,200,300,400,500,600,700,800,900"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Lato:100,100i,300,300i,400,400i,700,700i,900,900i"
+        rel="stylesheet" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link href="../css/styles.css" rel="stylesheet" />
+    <link href="../css/style-custom.css" rel="stylesheet" />
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <!-- d3 library -->
+    <script src="https://d3js.org/d3.v6.js"></script>
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+    <div class="mb-auto" id="top-header"></div>
+
+    <div class="container px-5">
+        <div class="row gx-5 align-items-center">
+            <div class="col-lg-6 order-lg-2 p-5">
+                <div id="world-asia-pie-chart" class="svg-container"></div>
+                <script src="../js/pie-chart.js"></script>
+            </div>
+            <div class="col-lg-6 order-lg-1">
+                <div class="p-5">
+                    <h2 class="display-4">Asia to the World</h2>
+                    <p>In early geography lessons, we learn that
+                        world is divided into 7 continents.</p>
+                    <p>In order to understand the impact of Covid-19 around the
+                        world, we need to closely look at Asia. As it is the largest
+                        of the world's continents, covering approximately 30 percent
+                        of the Earth's land area. It is also the world's most populous
+                        continent, with roughly 60 percent of the total population</p>
+                    <p>This pie chart illustrates the contributions of total number of
+                        deaths occured due to Covid-19 by all the continents of the World.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-auto" id="down-footer"></div>
+
+
+    <!-- <script src="../js/pie-chart.js"></script> -->
+    <script src="../js/scripts.js"></script>
+</body>
+
+</html>

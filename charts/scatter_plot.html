@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group Avatar: Scatter Plot with D3.js</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/style-custom.css">
+
+    <!-- Load d3.js -->
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+    <!-- <link rel="stylesheet" href="../css/style.css"> -->
+</head>
+
+<body>
+    <!-- Create a div where the graph will take place -->
+    <!-- <div class="div_for_light_colors clearfix"> -->
+    <div class="graph_div align-items-center p-5">
+        <div class="p-5 align-items-center" id="my_dataviz" style="float: left;"></div>
+        <div class="text-center" id="my_legend"></div>
+    </div>
+
+
+    <script>
+
+        // set the dimensions and margins of the graph
+        const margin = { top: 20, right: 20, bottom: 100, left: 100 },
+            width = 750 - margin.left - margin.right,
+            height = 600 - margin.top - margin.bottom;
+
+        var legend_width = 500;
+        var legend_height = 100;
+
+        // var tooltip = d3.select("#my_dataviz")
+        //     .append("div")
+        //     .attr("class", "toolTip")
+        //     .style("display", "none");
+
+        const legend_svg = d3.select("#my_legend")
+            .append("svg")
+            .attr("width", legend_width)
+            .attr("height", legend_height)
+
+        var tooltip = d3.select("body")
+            .append("div")
+            .style("position", "absolute")
+            .style("z-index", "10")
+            .style("visibility", "hidden")
+            .style("box-shadow", "0px 3px 9px rgba(0, 0, 0, .15)")
+            .style("padding", "5px")
+            .style("background-color", "black")
+            .style("border-radius", "5px")
+            .style("padding", "10px")
+            .style("color", "white")
+
+        d3.csv("../data/scatter_data.csv", function (data) {
+            var result = data.reduce(function (r, a) {
+                r[a.Regional_indicator] = r[a.Regional_indicator] || [];
+                r[a.Regional_indicator].push(a);
+                return r;
+            }, Object.create(null));
+            console.log(result)
+            var GroupbyRegionalIndicator = Object.keys(result).map((key) => [key, result[key]]);
+
+            // console.log(res)
+            console.log(GroupbyRegionalIndicator)
+
+            var TotalRegionalIndicator = GroupbyRegionalIndicator.map((d, i) => ({ region: d[1][0].region, value: d[0] }));
+            console.log(TotalRegionalIndicator)
+            // Color scale: takes treetype name and return a color
+
+            var min_maxval = function (colname) { return d3.extent(data, d => +d[colname]); };
+            var x_axis_col_lst = 'Population ages 65 and above (% of total)';
+            var y_axis_col_lst = 'COVID-19 Cases (% of total)';
+
+            // Highlight the specie that is hovered
+            var highlight = function (d) {
+                console.log(d)
+                selected_region_key = d.region
+                d3.selectAll(".dot")
+                    .transition()
+                    .duration(200)
+                    .style("fill", "lightgrey")
+                    .attr("r", 3)
+
+                d3.selectAll("." + selected_region_key)
+                    .transition()
+                    .duration(200)
+                    .style("fill", color(selected_region_key))
+                    .attr("r", 7)
+            }
+            var showTooltip = function (d) {
+                selected_region_key = d.region
+                d3.selectAll(".dot")
+                    .transition()
+                    .duration(200)
+                    .style("fill", "lightgrey")
+                    .attr("r", 3)
+
+                d3.selectAll("." + selected_region_key)
+                    .transition()
+                    .duration(200)
+                    .style("fill", color(selected_region_key))
+                    .attr("r", 7)
+                tooltip
+                    .style("visibility", "visible")
+                tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px")
+                    .html((d.location) + "<br><span>" + "Total cases:  " + (parseInt(d.total_cases) + "<br><span>" + "population: " + (d.population) + "<br> aged 65 and older: " + d.aged_65_older));
+
+            }
+            var moveTooltip = function (d) {
+                tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px")
+                    .html((d.location) + "<br><span>" + "Total cases:  " + (parseInt(d.total_cases) + "<br><span>" + "population: " + (d.population) + "<br> aged 65 and older: " + d.aged_65_older));
+
+            }
+
+
+            // Highlight the treetype that is hovered
+            const doNotHighlight = function (d) {
+                d3.selectAll(".dot")
+                    .transition()
+                    .duration(200)
+                    .style("fill", d => color(d.region))
+                    .attr("r", 3);
+
+                // tooltip.style("display", "none");
+            }
+            const hideTooltip = function (d) {
+                tooltip
+                    .style("visibility", "hidden");
+            }
+
+            var mycolors = ["#a30b71", '#8FBFCC', "#26265c", "#ffd20a", '#008080', "#FF1D33", '#226D7B', '#002E6B'];
+
+            // select color for each tree type
+            const color = d3.scaleOrdinal()
+                .domain(TotalRegionalIndicator)
+                .range(mycolors)
+            // .range(d3.schemeSet1)
+            // .range(d3.schemeSet2);
+
+            // ----------------------------------------------------------------------------------------
+
+            // Add a legend(interactive)
+
+            var n = TotalRegionalIndicator.length / 2;
+            var itemWidth = 150;
+            var itemHeight = 35;
+            var legend = legend_svg.selectAll(".legend")
+                .data(TotalRegionalIndicator)
+                .enter()
+                .append("g")
+                .attr("transform", function (d, i) { return "translate(" + i % n * itemWidth + "," + Math.floor(i / n) * itemHeight + ")"; })
+                .attr("class", "legend");
+
+            var rects = legend.append('rect')
+                .attr("width", 15)
+                .attr("height", 15)
+                .attr("fill", function (d, i) { return color(d.region); })
+                .on("mouseover", highlight)
+                .on("mouseleave", doNotHighlight);
+
+
+            var text = legend.append('text')
+                .attr("dy", 0)
+                .attr("x", 20)
+                .attr("y", 12)
+                .style("fill", function (d) { return color(d.region) })
+                .style('font-size', "0.8em")
+                .text(function (d) { return d.value }).call(wrap, 100, 1)
+                .on("mouseover", highlight)
+                .on("mouseleave", doNotHighlight);
+
+
+            // legend_svg.selectAll("mycircles")
+            //     .data(TotalRegionalIndicator)
+            //     .enter()
+            //     .append("circle")
+            //     .attr("cx", margin.left)
+            //     .attr("cy", function (d, i) { return 20 + i * 25 })
+            //     .attr("r", 7)
+            //     .style("fill", function (d) { return color(d.region) })
+            //     .on("mouseover", highlight)
+            //     .on("mouseleave", doNotHighlight)
+
+            // // Add labels beside legend dots
+            // legend_svg.selectAll("mylabels")
+            //     .data(TotalRegionalIndicator)
+            //     .enter()
+            //     .append("text")
+            //     .attr("x", margin.left + 16)
+            //     .attr("y", function (d, i) { return 20 + i * 25 })
+            //     .style("fill", function (d) { return color(d.region) })
+            //     .text(function (d) { return d.value })
+            //     .attr("text-anchor", "left")
+            //     .style("alignment-baseline", "middle")
+            //     .on("mouseover", highlight)
+            //     .on("mouseleave", doNotHighlight);
+
+            // ------------------------------------------------------------------------------------------
+
+
+            let xVar = "aged_65_older";
+            let yVar = "total_cases_share";
+            // d3.select("#scatter_graph").remove()
+
+            draw_graph(xVar, yVar);
+
+            function draw_graph(xVar, yVar) {
+
+                // append the svg object to the body of the page
+                const svg = d3.select("#my_dataviz")
+                    .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .attr("id", "scatter_graph")
+                    .append("g")
+                    .attr("transform",
+                        `translate(${margin.left}, ${margin.top})`);
+
+                // Add X axis
+                const x = d3.scaleLinear()
+                    .domain([0, min_maxval(xVar)[1]])
+                    .range([0, width]);
+                svg.append("g")
+                    .attr("transform", `translate(0, ${height})`)
+                    .call(d3.axisBottom(x));
+
+
+                // Add Y axis
+                const y = d3.scaleLinear()
+                    .domain([0, min_maxval(yVar)[1]])
+                    .range([height, 0]);
+                svg.append("g")
+                    .call(d3.axisLeft(y));
+
+                svg.selectAll('.tick text')
+                    .style('font-size', '12px')
+                    .attr('fill', '#8E8883');
+                svg.selectAll('.tick line')
+                    .attr('stroke', '#C0C0BB');
+                svg.selectAll('.domain')
+                    .attr('stroke', '#C0C0BB');
+
+
+                // Add X axis label:
+                svg.append("text")
+                    .attr("text-anchor", "middle")
+                    // .attr("x", width - 100 + margin.left)
+                    .attr("x", width / 2)
+                    .attr("y", height + margin.bottom - 20)
+                    .attr('fill', "#635F5D")// .style("fill", "white")
+                    .text("Population of 65 years and above (% of total)")
+                    .style('font-size', '1.3em');
+
+                // Y axis label:
+                svg.append("text")
+                    // .attr("text-anchor", "middle")
+                    .attr("transform", "rotate(-90)")
+                    // .attr("y", -margin.left + 30)
+                    .attr("y", -60)
+                    // .attr("x", -margin.top - (height / 6))
+                    .attr("x", -height + 20)
+                    .attr('fill', "#635F5D")
+                    .text("COVID Confirmed Cases (% of total population)") //.call(wrap, 150, 1)
+                    .style('font-size', '1.3em');
+
+                // Add dots
+                svg.append('g')
+                    .selectAll("dot")
+                    .data(data)
+                    .enter()
+                    .append("circle")
+                    .attr("class", function (d) { return "dot " + d.region })
+                    .attr("cx", function (d) { return x(+d[xVar]); })
+                    .attr("cy", function (d) { return y(+d[yVar]); })
+                    .attr("r", 4)
+                    .style("fill", function (d) { return color(d.region) })
+                    .on("mouseover", showTooltip)
+                    .on("mouseleave", moveTooltip)
+                    .on("mouseout", hideTooltip);
+
+            }
+
+
+
+
+        })
+
+
+        function wrap(text, width, lineH) {
+            text.each(function () {
+                var text = d3.select(this),
+                    words = text.text().split(/\s+/).reverse(),
+                    word,
+                    line = [],
+                    lineNumber = 0,
+                    lineHeight = +lineH, // ems
+                    y = text.attr("y"),
+                    dy = parseFloat(text.attr("dy")),
+                    tspan = text.text(null).append("tspan").attr("x", 20).attr("y", y).attr("dy", dy + "em");
+                while (word = words.pop()) {
+                    line.push(word);
+                    tspan.text(line.join(" "));
+                    if (tspan.node().getComputedTextLength() > width) {
+                        line.pop();
+                        tspan.text(line.join(" "));
+                        line = [word];
+                        tspan = text.append("tspan").attr("x", 20).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+                    }
+                }
+            });
+        }
+    </script>
+
+</body>
+
+</html>
